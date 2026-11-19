@@ -30,7 +30,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageGrab, ImageTk
 
 from help_texts import DETAILS
 
-APP_VERSION = "1.1.4"
+APP_VERSION = "1.0.0"
 
 SVC_UUID = uuid.UUID("6e4c0001-7a3b-4c1e-9f2d-4c6f6f6b6965")
 TEL_UUID = uuid.UUID("6e4c0002-7a3b-4c1e-9f2d-4c6f6f6b6965")
@@ -1251,7 +1251,7 @@ class App:
         self._update_tray()
         root.after(5000, lambda: self._check_updates(manual=False))
         # Açılış animasyonu bitince: güncellemeden sonraysa yenilikler.
-        root.after(3000, self._check_whats_new)
+        root.after(500, self._whats_new_when_ready)
         # Görev çubuğundan ya da Win+Aşağı ile küçültülünce de tepsiye gizle.
         root.bind("<Unmap>", lambda e: root.after(0, self._maybe_hide_to_tray) if e.widget is root else None, add="+")
         root.after(1000, self._tick)
@@ -2572,6 +2572,21 @@ class App:
             ok.pack(fill="x", pady=(round(18 * u), 0))
             return ok, "btn_ok"
         self._modal(build)
+
+    def _whats_new_when_ready(self):
+        """Yenilikleri açılış animasyonu bittikten ve pencere göründükten sonra
+        gösterir. (Sabit bir gecikme animasyonun ortasına denk geliyordu;
+        güncelleyicinin yeniden açtığı uygulama ön plana da çıkamadığı için
+        pencere diğer uygulamaların arkasında kalıyordu.)"""
+        if getattr(self, "closed", False):
+            return
+        if (self.splash is not None and not self.splash.finished) or self._hidden():
+            self.root.after(200, self._whats_new_when_ready)
+            return
+        prev = PREFS.get("last_version") or ""
+        if prev == APP_VERSION:
+            return
+        self.root.after(300, lambda: (self._bring_to_front(), self._check_whats_new()))
 
     def _check_whats_new(self):
         """Güncellemeden sonraki ilk açılışta yenilikleri gösterir. İlk kurulumda
