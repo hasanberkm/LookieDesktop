@@ -6,6 +6,8 @@ cihaz çalışırken değiştirir ve uygulama ile firmware güncellemelerini yü
 
 [English](README.md)
 
+![Lookie uygulaması](assets/app.png)
+
 ## Çalıştırma
 
 ```bash
@@ -43,6 +45,14 @@ ve firmware sürümlerini sunar.
    repo herkese açık olmalı.
 
 Yalnızca biri değiştiyse yalnızca `--app` ya da yalnızca `--fw` verin.
+
+## Araçlar
+
+| Dosya | İçerik |
+|---|---|
+| [`tools/make_update_json.py`](tools/make_update_json.py) | Yayın dosyalarını hazırlar (yukarıya bakın). |
+| [`tools/ets2-headtracking.ps1`](tools/ets2-headtracking.ps1) | Lookie'yi ETS2/ATS'nin TrackIR girişine bağlar; kamera kafayı bire bir takip eder. Ayrıntılar Lookie README'sinde. |
+| [`tools/joy-calibration-backup.reg`](tools/joy-calibration-backup.reg) | Geliştiricinin önceki Windows eksen kalibrasyonu kaydının başvuru amaçlı yedeği. |
 
 ## Lisans
 

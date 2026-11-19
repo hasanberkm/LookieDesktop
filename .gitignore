@@ -6,3 +6,6 @@ __pycache__/
 
 # Yayın hazırlığı (tools/make_update_json.py)
 release/
+
+# Kayıt defteri yedekleri (kişisel)
+tools/directinput-backup-*.reg
