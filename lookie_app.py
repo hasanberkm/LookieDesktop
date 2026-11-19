@@ -29,7 +29,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageGrab, ImageTk
 
 from help_texts import DETAILS
 
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 
 SVC_UUID = uuid.UUID("6e4c0001-7a3b-4c1e-9f2d-4c6f6f6b6965")
 TEL_UUID = uuid.UUID("6e4c0002-7a3b-4c1e-9f2d-4c6f6f6b6965")
@@ -2241,6 +2241,11 @@ class App:
         döndürür (dışarıdan destroy ile kapatılır)."""
         self._close_help()
         self._close_dropdown()
+        if self._hidden():
+            # Gizli (tepsideki) pencerenin uyarısı görünmez ama tıklamaları
+            # kilitler: önce pencereyi geri getir.
+            self._show_window()
+            self.root.update()
         u = self.ui
         overlay = self._blur_overlay() if PREFS["blur"] else None
         win = tk.Toplevel(self.root)
@@ -3102,10 +3107,21 @@ class App:
             return
         self.pending_app_update = path
 
-        def ask():
+        def ask_dialog():
             if self._dialog(T["app_ready_t"], T["app_ready"].format(v=v), "success",
                             (("btn_later", "secondary"), ("btn_restart", "primary"))) == "btn_restart":
                 self._shutdown(relaunch=True)
+
+        def ask():
+            # Uygulama tepside ya da arka plandaysa soru bildirim kartında
+            # (Sonra / Yeniden başlat) sorulur; uyarı penceresi gizli ana
+            # pencereyle birlikte görünmez kalıp uygulamayı kilitliyordu.
+            if self._app_in_front():
+                ask_dialog()
+            else:
+                self._notify(T["app_ready_t"], T["app_ready"].format(v=v), on_click=ask_dialog, timeout=None,
+                             actions=((T["btn_later"], "TealOutline.TButton", self._close_notice),
+                                      (T["btn_restart"], "Teal.TButton", lambda: self._shutdown(relaunch=True))))
         self.root.after(0, ask)
 
     def _update_failed(self, err):
