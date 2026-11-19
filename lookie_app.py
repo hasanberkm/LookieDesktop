@@ -30,7 +30,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageGrab, ImageTk
 
 from help_texts import DETAILS
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 
 SVC_UUID = uuid.UUID("6e4c0001-7a3b-4c1e-9f2d-4c6f6f6b6965")
 TEL_UUID = uuid.UUID("6e4c0002-7a3b-4c1e-9f2d-4c6f6f6b6965")
@@ -123,7 +123,7 @@ TEXT = {
         "tray_offline": "Cihaz bağlı değil",
         "upd_section": "Güncellemeler",
         "auto_update": "Güncellemeleri otomatik denetle",
-        "auto_update_h": "Açılışta ve 6 saatte bir GitHub'daki son yayın denetlenir. Yeni sürüm varsa yüklemek isteyip istemediğiniz sorulur.",
+        "auto_update_h": "Uygulama her açıldığında yeni sürümler denetlenir.",
         "check_now": "Güncellemeleri denetle",
         "upd_checking": "Denetleniyor…",
         "upd_uptodate": "Her şey güncel (son denetim {time}).",
@@ -160,7 +160,7 @@ TEXT = {
         "low_bat_t": "Pil azaldı",
         "low_bat": "Lookie'nin pili %{p}. Kapanmadan önce şarja takın.",
         "about": "Hakkında",
-        "about_t": "Lookie hakkında",
+        "about_t": "Oyunlarda kafanızı çevirerek etrafa bakmanızı sağlayan Lookie sensörünün ayarlarını yapar, cihazın durumunu gösterir ve güncellemelerini yükler.",
         "whats_new_t": "Yenilikler",
         "whats_new_s": "Lookie {v} sürümüne güncellendi.",
         "history_t": "Sürüm geçmişi",
@@ -327,7 +327,7 @@ TEXT = {
         "tray_offline": "Device not connected",
         "upd_section": "Updates",
         "auto_update": "Check for updates automatically",
-        "auto_update_h": "The latest release on GitHub is checked at startup and every 6 hours. If there is a new version, you are asked whether to install it.",
+        "auto_update_h": "New versions are checked every time the app starts.",
         "check_now": "Check for updates",
         "upd_checking": "Checking…",
         "upd_uptodate": "Everything is up to date (last check {time}).",
@@ -364,7 +364,7 @@ TEXT = {
         "low_bat_t": "Battery low",
         "low_bat": "Lookie's battery is at {p}%. Plug in the charger before it turns off.",
         "about": "About",
-        "about_t": "About Lookie",
+        "about_t": "Sets up the Lookie sensor, which lets you look around in games by turning your head, shows the device status and installs its updates.",
         "whats_new_t": "What's new",
         "whats_new_s": "Lookie has been updated to {v}.",
         "history_t": "Version history",
@@ -2476,7 +2476,8 @@ class App:
             logo.create_image(0, 0, image=logo.photo, anchor="nw")
             logo.pack()
             ttk.Label(body, text="Lookie", font=BRAND_FONT).pack(pady=(round(10 * u), 0))
-            ttk.Label(body, text=T["about_t"], foreground=self.muted).pack(pady=(round(2 * u), round(16 * u)))
+            ttk.Label(body, text=T["about_t"], foreground=self.muted, wraplength=round(300 * u),
+                      justify="center").pack(pady=(round(4 * u), round(16 * u)))
 
             # Bilgi paneli: yumuşak zeminli, satırlar ince çizgilerle ayrılmış.
             pw, rh = 300, 38
