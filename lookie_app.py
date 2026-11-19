@@ -29,7 +29,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageGrab, ImageTk
 
 from help_texts import DETAILS
 
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.3"
 
 SVC_UUID = uuid.UUID("6e4c0001-7a3b-4c1e-9f2d-4c6f6f6b6965")
 TEL_UUID = uuid.UUID("6e4c0002-7a3b-4c1e-9f2d-4c6f6f6b6965")
