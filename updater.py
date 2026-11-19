@@ -195,4 +195,26 @@ def install_app(new_exe, relaunch=True, target=None):
     # Görünmez konsolla (ping/move çalışsın), uygulamadan bağımsız; Windows'ta
     # alt süreç, açan uygulama kapanınca da sürer.
     flags = 0x00000200 | 0x08000000  # CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
-    subprocess.Popen(["cmd", "/c", script], creationflags=flags, close_fds=True)
+    subprocess.Popen(["cmd", "/c", script], creationflags=flags, close_fds=True, env=_clean_env())
+
+
+def _clean_env():
+    """Yeniden açılacak exe için ortam. PyInstaller'ın açılış kodu, ortamda
+    kendi değişkenlerini (_PYI_*) görünce kendini alt süreç sanıp bu
+    uygulamanın geçici klasörünü kullanmaya çalışır; o klasör uygulama
+    kapanınca silindiği için yeni exe "Failed to load Python DLL" hatasıyla
+    açılmıyordu. Bu değişkenler ve geçici klasörü gösteren yollar atılır."""
+    meipass = getattr(sys, "_MEIPASS", None)
+    env = {}
+    for k, v in os.environ.items():
+        if k.upper().startswith(("_PYI_", "_MEI")):
+            continue
+        if meipass and k.upper() != "PATH" and meipass.lower() in v.lower():
+            continue  # ör. TCL_LIBRARY, TK_LIBRARY
+        env[k] = v
+    if meipass and "PATH" in {k.upper() for k in env}:
+        key = next(k for k in env if k.upper() == "PATH")
+        env[key] = os.pathsep.join(p for p in env[key].split(os.pathsep)
+                                   if meipass.lower() not in p.lower())
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
