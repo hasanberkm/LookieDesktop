@@ -1,0 +1,11 @@
+winrt-runtime>=3.0
+winrt-Windows.Devices.Bluetooth>=3.0
+winrt-Windows.Devices.Bluetooth.GenericAttributeProfile>=3.0
+winrt-Windows.Devices.Enumeration>=3.0
+winrt-Windows.Foundation>=3.0
+winrt-Windows.Foundation.Collections>=3.0
+winrt-Windows.Storage.Streams>=3.0
+sv-ttk>=2.6
+pyinstaller>=6.0
+pillow>=10.0
+pystray>=0.19

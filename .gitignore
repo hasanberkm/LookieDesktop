@@ -1,0 +1,8 @@
+# PyInstaller çıktıları (build.bat)
+build/
+dist/
+*.spec
+__pycache__/
+
+# Yayın hazırlığı (tools/make_update_json.py)
+release/
