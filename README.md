@@ -32,7 +32,8 @@ The result is `dist\Lookie.exe`.
 The app reads the latest release of this repository
 (`releases/latest`) and offers newer app and firmware versions.
 
-1. Build the exe, and compile the firmware in the LookieFirmware
+1. Raise `APP_VERSION` in `lookie_app.py` and add the version's notes to the top of
+   `changelog.py` (they are shown in the app after the update). Build the exe, and compile the firmware in the LookieFirmware
    repository. Use `LookieFirmware.ino.bin` from the build folder, not the merged
    file.
 2. Create the release files:

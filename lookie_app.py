@@ -20,6 +20,7 @@ import sys
 import threading
 import tkinter as tk
 
+import changelog
 import profiles
 import updater
 import uuid
@@ -29,7 +30,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageGrab, ImageTk
 
 from help_texts import DETAILS
 
-APP_VERSION = "1.1.3"
+APP_VERSION = "1.1.4"
 
 SVC_UUID = uuid.UUID("6e4c0001-7a3b-4c1e-9f2d-4c6f6f6b6965")
 TEL_UUID = uuid.UUID("6e4c0002-7a3b-4c1e-9f2d-4c6f6f6b6965")
@@ -160,6 +161,11 @@ TEXT = {
         "low_bat": "Lookie'nin pili %{p}. Kapanmadan önce şarja takın.",
         "about": "Hakkında",
         "about_t": "Lookie hakkında",
+        "whats_new_t": "Yenilikler",
+        "whats_new_s": "Lookie {v} sürümüne güncellendi.",
+        "history_t": "Sürüm geçmişi",
+        "history_s": "Kullandığınız sürüm: {v}",
+        "ver_link_h": "Sürüm geçmişi",
         "live": "Canlı görünüm",
         "head_yaw": "Baş, sağ-sol",
         "view_yaw": "Oyundaki bakış",
@@ -359,6 +365,11 @@ TEXT = {
         "low_bat": "Lookie's battery is at {p}%. Plug in the charger before it turns off.",
         "about": "About",
         "about_t": "About Lookie",
+        "whats_new_t": "What's new",
+        "whats_new_s": "Lookie has been updated to {v}.",
+        "history_t": "Version history",
+        "history_s": "You are using version {v}.",
+        "ver_link_h": "Version history",
         "live": "Live view",
         "head_yaw": "Head, left-right",
         "view_yaw": "View in game",
@@ -496,7 +507,12 @@ def pick_language():
 PREFS_PATH = os.path.join(os.environ.get("APPDATA") or os.path.expanduser("~"), "Lookie", "settings.json")
 DEFAULT_PREFS = {"theme": "system", "lang": "system", "topmost": False, "confirm_close": True, "blur": True,
                  "low_bat_alert": True, "tray": False, "battery_demo": False,
-                 "auto_update": True}
+                 "auto_update": True, "last_version": ""}
+
+
+# Ayar dosyası bu açılıştan önce var mıydı? (Yenilikler penceresi: ilk kurulum
+# mu, last_version'ı tutmayan eski bir sürümden güncelleme mi?)
+PREFS_EXISTED = os.path.exists(PREFS_PATH)
 
 
 def load_prefs():
@@ -1234,6 +1250,8 @@ class App:
         root.after(50, self._poll)
         self._update_tray()
         root.after(5000, lambda: self._check_updates(manual=False))
+        # Açılış animasyonu bitince: güncellemeden sonraysa yenilikler.
+        root.after(3000, self._check_whats_new)
         # Görev çubuğundan ya da Win+Aşağı ile küçültülünce de tepsiye gizle.
         root.bind("<Unmap>", lambda e: root.after(0, self._maybe_hide_to_tray) if e.widget is root else None, add="+")
         root.after(1000, self._tick)
@@ -2475,13 +2493,108 @@ class App:
             for i, (label, value) in enumerate(rows):
                 cy = (i * rh + rh / 2) * u
                 panel.create_text(16 * u, cy, text=label, anchor="w", fill=self.muted, font=(FONT, 10))
-                panel.create_text((pw - 16) * u, cy, text=value, anchor="e", fill=self.fg, font=(FONT_SEMI, 10))
+                if value == APP_VERSION and i == len(rows) - 1:
+                    # Uygulama sürümü bir bağlantı: sürüm geçmişini açar.
+                    panel.create_text((pw - 16) * u, cy, text=value, anchor="e", fill=TEAL,
+                                      font=(FONT_SEMI, 10, "underline"), tags=("ver",))
+                    panel.tag_bind("ver", "<Enter>", lambda _e: panel.configure(cursor="hand2"))
+                    panel.tag_bind("ver", "<Leave>", lambda _e: panel.configure(cursor=""))
+                    panel.tag_bind("ver", "<Button-1>", lambda _e: finish("history"))
+                else:
+                    panel.create_text((pw - 16) * u, cy, text=value, anchor="e", fill=self.fg,
+                                      font=(FONT_SEMI, 10))
             panel.pack()
 
             ok = ttk.Button(body, text=T["btn_ok"], style="Teal.TButton", command=lambda: finish("btn_ok"))
             ok.pack(fill="x", pady=(round(20 * u), 0))
             return ok, "btn_ok"
+        if self._modal(build) == "history":
+            self.root.after(50, lambda: self._whats_new(None))
+
+    def _whats_new(self, since):
+        """since verilirse o sürümden sonraki yenilikler ("Yenilikler"), None ise
+        bütün sürüm geçmişi gösterilir."""
+        u = self.ui
+        items = [(v, date, notes.get(LANG) or notes["en"]) for v, date, notes in changelog.CHANGES
+                 if not updater.is_newer(v, APP_VERSION) and (since is None or updater.is_newer(v, since))]
+        if not items:
+            return
+        title = T["history_t"] if since is None else T["whats_new_t"]
+        sub = (T["history_s"] if since is None else T["whats_new_s"]).format(v=APP_VERSION)
+
+        def build(body, finish):
+            top = ttk.Frame(body)
+            top.pack(fill="x", padx=(0, round(22 * u)))
+            logo = tk.Canvas(top, width=round(40 * u), height=round(40 * u), highlightthickness=0, bg=self.bg)
+            logo.photo = ImageTk.PhotoImage(scaled_icon(round(40 * u)))
+            logo.create_image(0, 0, image=logo.photo, anchor="nw")
+            logo.pack(side="left", padx=(0, round(12 * u)))
+            heads = ttk.Frame(top)
+            heads.pack(side="left", fill="x")
+            ttk.Label(heads, text=title, font=(FONT, 13, "bold")).pack(anchor="w")
+            ttk.Label(heads, text=sub, foreground=self.muted).pack(anchor="w")
+
+            box = ttk.Frame(body)
+            box.pack(fill="both", expand=True, pady=(round(16 * u), 0))
+            text = tk.Text(box, width=52, wrap="word", relief="flat", borderwidth=0, highlightthickness=0,
+                           bg=self.bg, fg=self.fg, font=(FONT, 10), cursor="arrow", padx=0, pady=0,
+                           spacing1=round(2 * u), spacing3=round(2 * u))
+            text.tag_configure("ver", font=(FONT, 11, "bold"), foreground=self.fg, spacing1=round(10 * u))
+            text.tag_configure("first", spacing1=0)
+            text.tag_configure("date", font=(FONT, 9), foreground=self.muted)
+            text.tag_configure("dot", foreground=TEAL)
+            text.tag_configure("item", lmargin1=round(4 * u), lmargin2=round(18 * u), foreground=self.fg)
+            for n, (v, date, notes) in enumerate(items):
+                text.insert("end", f"Lookie {v}", ("ver", "first") if n == 0 else ("ver",))
+                text.insert("end", f"   {date}\n", ("date",))
+                for line in notes:
+                    text.insert("end", "•  ", ("item", "dot"))
+                    text.insert("end", line + "\n", ("item",))
+            text.configure(state="disabled")
+            # Satır sayısı yazı genişliğinden hesaplanır (pencere çizilmeden
+            # Text'in kendi sayımı yanlış çıkıyordu).
+            import tkinter.font as tkfont
+            f = tkfont.Font(font=(FONT, 10))
+            avail = f.measure("0") * 52 - round(18 * u)
+            lines = 0
+            for _v, _d, notes in items:
+                lines += 2  # başlık ve üstündeki boşluk
+                for line in notes:
+                    lines += max(1, math.ceil(f.measure("•  " + line) / max(1, avail)))
+            text.configure(height=max(3, min(lines, 16)))
+            text.pack(side="left", fill="both", expand=True)
+            if lines > 16:
+                bar = ttk.Scrollbar(box, orient="vertical", command=text.yview)
+                text.configure(yscrollcommand=bar.set)
+                bar.pack(side="right", fill="y", padx=(round(8 * u), 0))
+
+            ok = ttk.Button(body, text=T["btn_ok"], style="Teal.TButton", command=lambda: finish("btn_ok"))
+            ok.pack(fill="x", pady=(round(18 * u), 0))
+            return ok, "btn_ok"
         self._modal(build)
+
+    def _check_whats_new(self):
+        """Güncellemeden sonraki ilk açılışta yenilikleri gösterir. İlk kurulumda
+        göstermez; sürüm bilgisini tutmayan eski sürümden gelindiyse bu
+        sürümün yeniliklerini gösterir."""
+        prev = PREFS.get("last_version") or ""
+        if prev == APP_VERSION:
+            return
+        PREFS["last_version"] = APP_VERSION
+        save_prefs(PREFS)
+        if prev and not updater.is_newer(APP_VERSION, prev):
+            return  # eski sürüme dönüldü
+        if not prev and not PREFS_EXISTED:
+            return  # ilk kurulum
+        since = prev or ".".join(str(x) for x in self._previous_version())
+        self._whats_new(since)
+
+    @staticmethod
+    def _previous_version():
+        """last_version'ı tutmayan sürümden gelindiyse: bu sürümden bir önceki kayıt."""
+        versions = [updater.parse_version(v) for v, *_ in changelog.CHANGES]
+        older = [v for v in versions if v < updater.parse_version(APP_VERSION)]
+        return max(older) if older else (0, 0, 0)
 
     def _dialog_icon(self, canvas, kind):
         """Yumuşak renkli daire üstünde renkli işaret (düz dolgu yerine)."""

@@ -32,7 +32,9 @@ Sonuç `dist\Lookie.exe` dosyasıdır.
 Uygulama bu reponun son yayınını (`releases/latest`) okur ve daha yeni uygulama
 ve firmware sürümlerini sunar.
 
-1. Exe'yi oluşturun ve firmware'i LookieFirmware reposunda derleyin.
+1. `lookie_app.py` içindeki `APP_VERSION` değerini artırın ve sürümün notlarını
+   `changelog.py` dosyasının en üstüne ekleyin (güncellemeden sonra uygulamada
+   gösterilir). Exe'yi oluşturun ve firmware'i LookieFirmware reposunda derleyin.
    Derleme klasöründeki `LookieFirmware.ino.bin` dosyasını kullanın, birleşik
    (merged) dosyayı değil.
 2. Yayın dosyalarını hazırlayın:
