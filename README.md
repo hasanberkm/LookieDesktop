@@ -2,7 +2,8 @@
 
 The Windows app for the [Lookie](https://github.com/hasanberkm/LookieFirmware) head
 tracker. It connects to the device over Bluetooth, shows the live view, changes
-the settings while the device runs and installs app and firmware updates.
+the settings while the device runs, keeps up to 3 settings profiles (optionally
+password protected) and installs app and firmware updates.
 
 [Türkçe](README.tr.md)
 

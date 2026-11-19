@@ -20,6 +20,7 @@ import sys
 import threading
 import tkinter as tk
 
+import profiles
 import updater
 import uuid
 from tkinter import ttk
@@ -28,7 +29,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageGrab, ImageTk
 
 from help_texts import DETAILS
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 SVC_UUID = uuid.UUID("6e4c0001-7a3b-4c1e-9f2d-4c6f6f6b6965")
 TEL_UUID = uuid.UUID("6e4c0002-7a3b-4c1e-9f2d-4c6f6f6b6965")
@@ -207,6 +208,41 @@ TEXT = {
         "adz_h": "Merkezdeki küçük titremeyi sıfırda tutar.",
         "rsm": "Ortalama gecikmesi",
         "rsm_h": "Merkez, ortalama butonu bırakıldıktan bu kadar sonra alınır.",
+        "tab_profile": "Profil",
+        "prof_section": "Profiller",
+        "prof_hint": "Her profil cihaz ayarlarının ayrı bir kopyasıdır; en fazla 3 profil oluşturulabilir. Bir profil seçilince ayarları cihaza yüklenir. Ayarları değiştirip Kaydet'e basınca değişiklikler hem cihaza hem etkin profile kaydedilir.",
+        "profile_n": "Profil {n}",
+        "prof_new": "Yeni profil",
+        "prof_full": "En fazla 3 profil oluşturulabilir.",
+        "prof_lock": "Profilimi şifrele",
+        "prof_locked": "Şifreli",
+        "prof_active": "Etkin",
+        "prof_rename": "Yeniden adlandır",
+        "prof_delete": "Sil",
+        "prof_offline": "Cihaz bağlanınca seçili profil cihaza yüklenir.",
+        "prof_lock_h": "Şifreli bir profilin ayarlarını kaydetmek, adını değiştirmek, profili silmek ya da şifreyi kaldırmak için şifre sorulur. Şifre unutulursa geri alınamaz.",
+        "pw_set_t": "Profili şifrele",
+        "pw_set_m": "“{name}” profilinde değişiklik kaydedilirken bu şifre sorulacak.",
+        "pw_field": "Şifre",
+        "pw_again": "Şifre (tekrar)",
+        "pw_short": "Şifre en az 4 karakter olmalı.",
+        "pw_mismatch": "Şifreler aynı değil.",
+        "pw_ask_t": "Şifre gerekli",
+        "pw_ask_m": "“{name}” şifreli. Devam etmek için şifreyi girin.",
+        "pw_wrong": "Şifre yanlış.",
+        "name_t": "Profili yeniden adlandır",
+        "name_field": "Profil adı",
+        "name_empty": "Ad boş olamaz.",
+        "name_taken": "Bu adda bir profil zaten var.",
+        "prof_del_t": "Profil silinsin mi?",
+        "prof_del_m": "“{name}” ve kayıtlı ayarları silinecek. Bu işlem geri alınamaz.",
+        "prof_switch_t": "Kaydedilmemiş değişiklikler var",
+        "prof_switch_m": "“{name}” profiline geçilince kaydedilmemiş değişiklikler kaybolacak.",
+        "btn_switch": "Profile geç",
+        "btn_delete": "Sil",
+        "btn_lock": "Şifrele",
+        "btn_continue": "Devam",
+        "btn_save_name": "Kaydet",
         "save": "Kaydet",
         "revert": "Geri al",
         "defaults": "Varsayılanlar",
@@ -371,6 +407,41 @@ TEXT = {
         "adz_h": "Keeps small jitter at the center at zero.",
         "rsm": "Recenter delay",
         "rsm_h": "The center is captured this long after the recenter button is released.",
+        "tab_profile": "Profile",
+        "prof_section": "Profiles",
+        "prof_hint": "Each profile is a separate copy of the device settings; up to 3 profiles can be created. Selecting a profile loads its settings onto the device. When you change settings and press Save, the changes are saved both on the device and in the active profile.",
+        "profile_n": "Profile {n}",
+        "prof_new": "New profile",
+        "prof_full": "Up to 3 profiles can be created.",
+        "prof_lock": "Protect my profile with a password",
+        "prof_locked": "Protected",
+        "prof_active": "Active",
+        "prof_rename": "Rename",
+        "prof_delete": "Delete",
+        "prof_offline": "The selected profile is loaded onto the device when it connects.",
+        "prof_lock_h": "Saving the settings of a protected profile, renaming it, deleting it or removing the password asks for the password. A forgotten password cannot be recovered.",
+        "pw_set_t": "Protect profile",
+        "pw_set_m": "This password is asked when changes to “{name}” are saved.",
+        "pw_field": "Password",
+        "pw_again": "Password (again)",
+        "pw_short": "The password must have at least 4 characters.",
+        "pw_mismatch": "The passwords do not match.",
+        "pw_ask_t": "Password required",
+        "pw_ask_m": "“{name}” is protected. Enter the password to continue.",
+        "pw_wrong": "Wrong password.",
+        "name_t": "Rename profile",
+        "name_field": "Profile name",
+        "name_empty": "The name cannot be empty.",
+        "name_taken": "A profile with this name already exists.",
+        "prof_del_t": "Delete the profile?",
+        "prof_del_m": "“{name}” and its saved settings will be deleted. This cannot be undone.",
+        "prof_switch_t": "There are unsaved changes",
+        "prof_switch_m": "Unsaved changes are lost when you switch to “{name}”.",
+        "btn_switch": "Switch profile",
+        "btn_delete": "Delete",
+        "btn_lock": "Protect",
+        "btn_continue": "Continue",
+        "btn_save_name": "Save",
         "save": "Save",
         "revert": "Revert",
         "defaults": "Defaults",
@@ -1031,6 +1102,14 @@ class DeviceLink(threading.Thread):
             await asyncio.sleep(0.15)
             await self._read_config()
 
+    async def send_many(self, commands, reread=False):
+        """Komutları sırayla gönderir (ayrı call()'lar sırayı korumaz)."""
+        for c in commands:
+            await self.send(c)
+        if reread:
+            await asyncio.sleep(0.15)
+            await self._read_config()
+
 
 # --------------------------------------------------------------------------
 # Ayar tanımları
@@ -1117,6 +1196,12 @@ class App:
         self.upd_cancel = False
         self.upd_status_text = ""
         self.pending_app_update = None
+        # Profiller: etkin profil cihaza bu bağlantıda eşitlendi mi, sıradaki
+        # okuma (varsayılanlar yüklendikten sonra) profile alınacak mı.
+        self.store = profiles.ProfileStore(first_name=T["profile_n"].format(n=1))
+        self.prof_synced = False
+        self.prof_capture = False
+        self.prof_page = None
 
         root.title(T["title"])
         root.minsize(900, 600)
@@ -1637,7 +1722,11 @@ class App:
         self.tabs = ttk.Notebook(right)
         self.tabs.grid(row=0, column=0, sticky="nsew")
         pages = {}
-        self.tab_icons = {k: self._tab_icon(k) for k in ("tab_yaw", "tab_pitch", "tab_chair", "tab_smooth", "tab_app")}
+        self.tab_icons = {k: self._tab_icon(k) for k in ("tab_profile", "tab_yaw", "tab_pitch", "tab_chair",
+                                                         "tab_smooth", "tab_app")}
+        prof_holder, self.prof_page = self._scroll_page(self.tabs)
+        self.tabs.add(prof_holder, text=" " + T["tab_profile"], image=self.tab_icons["tab_profile"], compound="left")
+        self._build_profile_tab()
         for tab in ("tab_yaw", "tab_pitch", "tab_chair", "tab_smooth"):
             holder, page = self._scroll_page(self.tabs)
             page.columnconfigure(1, weight=1)
@@ -1834,6 +1923,240 @@ class App:
         self.import_label = ttk.Label(page, text="", foreground=self.muted)
         self.import_label.grid(row=row, column=0, columnspan=3, sticky="w", pady=(0, 8))
         row += 1
+
+    # -- profiller ----------------------------------------------------------------
+    @staticmethod
+    def _cfg_values(cfg):
+        merged = dict(cfg.get("s", {}))
+        merged["prng"] = cfg.get("prng")
+        merged["poff"] = cfg.get("poff")
+        keys = {spec[0] for spec in SETTINGS}
+        return {k: float(v) for k, v in merged.items() if k in keys and isinstance(v, (int, float))}
+
+    def _current_values(self):
+        return {spec[0]: float(self.values[spec[0]]) for spec in SETTINGS if spec[0] in self.values}
+
+    def _profile_on_config(self, cfg):
+        """Cihazdan okunan ayarlar geldikçe: varsayılanlarla yeni açılan profil
+        bu değerleri alır; bağlantıdaki ilk okumada etkin profil cihaza
+        eşitlenir (cihazda başka değerler varsa profil yüklenir)."""
+        p = self.store.active
+        current = self._cfg_values(cfg)
+        if self.prof_capture:
+            self.prof_capture = False
+            p.values, p.fresh = current, False
+            self.store.save()
+            self._build_profile_tab()
+            return
+        if self.prof_synced:
+            return
+        self.prof_synced = True
+        if p.values is None and not p.fresh:
+            # İlk profil: cihazdaki mevcut ayarlarla başlar.
+            p.values = current
+            self.store.save()
+            self._build_profile_tab()
+        elif p.values is None or not profiles.same_values(p.values, current) or cfg.get("dirty"):
+            self._push_profile(p)
+        self._update_dirty()
+
+    def _push_profile(self, p):
+        """Profilin değerlerini cihaza gönderir ve cihaza kaydeder. Değeri
+        olmayan yeni profil cihazın varsayılanlarıyla başlar."""
+        if not self.connected:
+            self.prof_synced = False  # bağlanınca yüklenir
+            return
+        if self.send_job is not None:
+            self.root.after_cancel(self.send_job)
+            self.send_job = None
+        self.pending.clear()
+        if p.values is None:
+            cmds = ["defaults", "save"]
+            self.prof_capture = True
+        else:
+            cmds = [f"{k}={v:g}" for k, v in p.values.items()] + ["save"]
+        self.prof_synced = True
+        self.link.call(self.link.send_many, cmds, True)
+
+    def _activate_profile(self, pid):
+        p = self.store.get(pid)
+        if p is None or pid == self.store.active_id:
+            self._build_profile_tab()
+            return
+        if self.connected and self.dirty:
+            if self._dialog(T["prof_switch_t"], T["prof_switch_m"].format(name=p.name), "warning",
+                            (("btn_cancel", "secondary"), ("btn_switch", "primary"))) != "btn_switch":
+                self._build_profile_tab()
+                return
+        self.store.active_id = pid
+        self.store.save()
+        self._push_profile(p)
+        self._build_profile_tab()
+        self._update_dirty()
+
+    def _new_profile(self):
+        p = self.store.add(self.store.next_name(T["profile_n"]))
+        if p is not None:
+            self._activate_profile(p.id)
+
+    def _rename_profile(self, p):
+        if p.locked and not self._ask_password(p):
+            return
+
+        def check(vals):
+            name = vals[0].strip()
+            if not name:
+                return T["name_empty"]
+            if any(o.name.lower() == name.lower() for o in self.store.profiles if o is not p):
+                return T["name_taken"]
+            return None
+        vals = self._ask_fields(T["name_t"], None, ((T["name_field"], None, p.name),), check, "btn_save_name")
+        if vals:
+            p.name = vals[0].strip()[:32]
+            self.store.save()
+            self._build_profile_tab()
+            self._update_dirty()
+
+    def _delete_profile(self, p):
+        if p.locked and not self._ask_password(p):
+            return
+        if self._dialog(T["prof_del_t"], T["prof_del_m"].format(name=p.name), "warning",
+                        (("btn_cancel", "secondary"), ("btn_delete", "primary"))) != "btn_delete":
+            return
+        was_active = p.id == self.store.active_id
+        if self.store.remove(p.id) and was_active:
+            self._push_profile(self.store.active)
+        self._build_profile_tab()
+        self._update_dirty()
+
+    def _toggle_lock(self, p, var):
+        if var.get():
+            def check(vals):
+                if len(vals[0]) < 4:
+                    return T["pw_short"]
+                if vals[0] != vals[1]:
+                    return T["pw_mismatch"]
+                return None
+            vals = self._ask_fields(T["pw_set_t"], T["pw_set_m"].format(name=p.name),
+                                    ((T["pw_field"], "•", ""), (T["pw_again"], "•", "")), check, "btn_lock")
+            if vals:
+                p.set_password(vals[0])
+                self.store.save()
+        elif self._ask_password(p):
+            p.lock = None
+            self.store.save()
+        self._build_profile_tab()
+
+    def _ask_password(self, p):
+        if not p.locked:
+            return True
+        vals = self._ask_fields(T["pw_ask_t"], T["pw_ask_m"].format(name=p.name), ((T["pw_field"], "•", ""),),
+                                lambda v: None if p.check_password(v[0]) else T["pw_wrong"], "btn_continue")
+        return vals is not None
+
+    def _ask_fields(self, title, message, fields, validate, ok_key):
+        """Yazı alanlı uyarı. fields: (etiket, gizleme karakteri ya da None,
+        başlangıç). validate(değerler) hata metni ya da None döndürür; hata
+        varsa pencere açık kalır. Girilen değerleri ya da None döndürür."""
+        u = self.ui
+        out = {}
+
+        def build(body, finish):
+            ttk.Label(body, text=title, font=(FONT, 13, "bold")).grid(row=0, column=0, sticky="w",
+                                                                     padx=(0, round(28 * u)))
+            r = 1
+            if message:
+                ttk.Label(body, text=message, foreground=self.muted, wraplength=round(340 * u),
+                          justify="left").grid(row=r, column=0, sticky="w", pady=(round(6 * u), 0))
+                r += 1
+            entries = []
+            for label, show, initial in fields:
+                ttk.Label(body, text=label).grid(row=r, column=0, sticky="w", pady=(round(12 * u), round(4 * u)))
+                e = ttk.Entry(body, show=show or "", width=34)
+                e.insert(0, initial)
+                e.grid(row=r + 1, column=0, sticky="ew")
+                entries.append(e)
+                r += 2
+            err = ttk.Label(body, text="", foreground=CLOSE_COLOR)
+            err.grid(row=r, column=0, sticky="w", pady=(round(8 * u), 0))
+            row = ttk.Frame(body)
+            row.grid(row=r + 1, column=0, sticky="e", pady=(round(14 * u), 0))
+
+            def submit(_e=None):
+                vals = [e.get() for e in entries]
+                problem = validate(vals)
+                if problem:
+                    err.config(text=problem)
+                    return
+                out["vals"] = vals
+                finish(ok_key)
+            width = max(len(T["btn_cancel"]), len(T[ok_key])) + 4
+            ttk.Button(row, text=T[ok_key], style="Teal.TButton", width=width, command=submit).pack(side="right")
+            ttk.Button(row, text=T["btn_cancel"], style="TealOutline.TButton", width=width,
+                       command=lambda: finish(None)).pack(side="right", padx=(0, round(8 * u)))
+            for e in entries:
+                e.bind("<Return>", submit)
+            entries[0].after(60, lambda: (entries[0].focus_set(), entries[0].select_range(0, "end")))
+            return None
+        return out.get("vals") if self._modal(build) == ok_key else None
+
+    def _build_profile_tab(self):
+        page = self.prof_page
+        if page is None:
+            return
+        try:
+            for w in page.winfo_children():
+                w.destroy()
+        except tk.TclError:
+            return
+        u = self.ui
+        page.columnconfigure(0, weight=1)
+        ttk.Label(page, text=T["prof_section"], font=(FONT, 11, "bold")).grid(row=0, column=0, sticky="w",
+                                                                            pady=(0, 6))
+        ttk.Label(page, text=T["prof_hint"], foreground=self.muted, wraplength=460, justify="left").grid(
+            row=1, column=0, sticky="w", pady=(0, 10))
+        self.prof_var = tk.StringVar(value=self.store.active_id)
+        r = 2
+        for i, p in enumerate(self.store.profiles):
+            if i:
+                ttk.Separator(page).grid(row=r, column=0, sticky="ew", pady=round(8 * u))
+                r += 1
+            active = p.id == self.store.active_id
+            top = ttk.Frame(page)
+            top.grid(row=r, column=0, sticky="ew")
+            ttk.Radiobutton(top, text=p.name, value=p.id, variable=self.prof_var,
+                            command=lambda pid=p.id: self._activate_profile(pid)).pack(side="left")
+            if active:
+                ttk.Label(top, text=T["prof_active"], foreground=TEAL, font=(FONT, 9, "bold")).pack(
+                    side="left", padx=(10, 0))
+            if p.locked:
+                ttk.Label(top, text="🔒 " + T["prof_locked"], foreground=self.muted, font=(FONT, 9)).pack(
+                    side="left", padx=(10, 0))
+            if len(self.store.profiles) > 1:
+                ttk.Button(top, text=T["prof_delete"], style="Ghost.TButton", cursor="hand2",
+                           command=lambda q=p: self._delete_profile(q)).pack(side="right")
+            ttk.Button(top, text=T["prof_rename"], style="Ghost.TButton", cursor="hand2",
+                       command=lambda q=p: self._rename_profile(q)).pack(side="right", padx=(0, 4))
+            r += 1
+            var = tk.IntVar(value=1 if p.locked else 0)
+            ttk.Checkbutton(page, text=T["prof_lock"], variable=var,
+                            command=lambda q=p, v=var: self._toggle_lock(q, v)).grid(
+                row=r, column=0, sticky="w", padx=(round(26 * u), 0), pady=(round(4 * u), 0))
+            r += 1
+        bottom = ttk.Frame(page)
+        bottom.grid(row=r, column=0, sticky="w", pady=(round(16 * u), 0))
+        add = ttk.Button(bottom, text="+  " + T["prof_new"], style="TealOutline.TButton", command=self._new_profile)
+        add.pack(side="left")
+        if not self.store.can_add():
+            add.state(["disabled"])
+            ttk.Label(bottom, text=T["prof_full"], foreground=self.muted).pack(side="left", padx=(12, 0))
+        r += 1
+        ttk.Label(page, text=T["prof_lock_h"], foreground=self.muted, wraplength=460, justify="left",
+                  font=(FONT, 9)).grid(row=r, column=0, sticky="w", pady=(round(14 * u), 0))
+        r += 1
+        if not self.connected:
+            ttk.Label(page, text=T["prof_offline"], foreground=self.muted, wraplength=460, justify="left",
+                      font=(FONT, 9)).grid(row=r, column=0, sticky="w", pady=(round(6 * u), 0))
 
     # -- açılır liste ------------------------------------------------------------
     def _dropdown(self, box):
@@ -2085,6 +2408,10 @@ class App:
             line([(3.5, 9.5), (12.5, 9.5)])
             line([(8, 9.5), (8, 13)])
             line([(4.8, 13.6), (11.2, 13.6)])
+        elif kind == "tab_profile":  # kişi: baş ve omuzlar
+            r = 2.8 * k
+            d.ellipse((8 * k - r, 5.2 * k - r, 8 * k + r, 5.2 * k + r), outline=color, width=w)
+            d.arc((2.8 * k, 9.6 * k, 13.2 * k, 19.6 * k), 180, 360, fill=color, width=w)
         elif kind == "tab_smooth":  # yumuşak dalga
             pts = [(2 + i * 12 / 24, 8 - 3.2 * math.sin(i / 24 * 2 * math.pi)) for i in range(25)]
             line(pts)
@@ -2545,7 +2872,10 @@ class App:
         self._draw_curve()
 
     def _update_dirty(self):
-        self.dirty_label.config(text=(T["unsaved"] if self.dirty else T["saved"]) if self.connected else "")
+        text = ""
+        if self.connected:
+            text = f"{self.store.active.name} · " + (T["unsaved"] if self.dirty else T["saved"])
+        self.dirty_label.config(text=text)
         self.btn_save.state(["!disabled"] if (self.connected and self.dirty) else ["disabled"])
 
     def _set_enabled(self, on):
@@ -2558,8 +2888,15 @@ class App:
 
     # -- komutlar -----------------------------------------------------------
     def _save(self):
+        """Cihaza kaydeder ve değerleri etkin profile yazar (şifreliyse sorar)."""
+        p = self.store.active
+        if p.locked and not self._ask_password(p):
+            return
         self._flush()
         self.link.call(self.link.send, "save", True)
+        p.values = self._current_values()
+        p.fresh = False
+        self.store.save()
 
     def _defaults(self):
         if self._dialog(T["defaults_q_t"], T["defaults_q"], "question",
@@ -3186,9 +3523,11 @@ class App:
                     if data == "connected":
                         self.connected = True
                         self._set_enabled(True)
+                        self._build_profile_tab()
                     self._set_status(data)
                 elif kind == "config":
                     self._apply_config(data)
+                    self._profile_on_config(data)
                     # Cihazın firmware sürümü artık biliniyor: yayınla karşılaştır.
                     self.root.after(1500, lambda: self._offer_updates(manual=False))
                     self._gyro_check(data)
@@ -3214,6 +3553,9 @@ class App:
                             return
                 elif kind == "disconnected":
                     self.connected = False
+                    self.prof_synced = False
+                    self.prof_capture = False
+                    self._build_profile_tab()
                     self.tel = None
                     self._set_enabled(False)
                     self._set_status("searching")

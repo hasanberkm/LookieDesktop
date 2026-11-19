@@ -2,7 +2,8 @@
 
 [Lookie](https://github.com/hasanberkm/LookieFirmware) kafa takip cihazının Windows
 uygulaması. Cihaza Bluetooth ile bağlanır, canlı görünümü gösterir, ayarları
-cihaz çalışırken değiştirir ve uygulama ile firmware güncellemelerini yükler.
+cihaz çalışırken değiştirir, en fazla 3 ayar profili tutar (istenirse şifreli)
+ve uygulama ile firmware güncellemelerini yükler.
 
 [English](README.md)
 
