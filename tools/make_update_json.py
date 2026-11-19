@@ -2,7 +2,7 @@
 
 Kullanım (proje klasöründen):
   python tools/make_update_json.py --app dist/Lookie.exe --app-version 1.1.0 \
-      --fw <derleme klasörü>/firmware.ino.bin --fw-version 1.2.0 --out release
+      --fw <derleme klasörü>/LookieFirmware.ino.bin --fw-version 1.2.0 --out release
 
 Çıktı klasörüne (varsayılan "release") şunlar yazılır:
   update.json                 sürümler, dosya adları, boyutlar, SHA-256
@@ -17,7 +17,7 @@ Yalnızca biri güncellendiyse sadece onu ver: --app ya da --fw. Diğer tür
 update.json'da olmaz ve onun için güncelleme sunulmaz.
 
 Firmware dosyası: Arduino IDE'de Taslak > Derlenmiş İkili Dosyayı Dışa Aktar
-ya da arduino-cli'nin derleme klasöründeki firmware.ino.bin. Birleşik
+ya da arduino-cli'nin derleme klasöründeki LookieFirmware.ino.bin. Birleşik
 (merged) dosya DEĞİL: Bluetooth güncellemesi yalnızca uygulama imajını alır.
 """
 
@@ -40,7 +40,7 @@ def main():
     ap.add_argument("--app", help="Lookie.exe")
     ap.add_argument("--app-version")
     ap.add_argument("--app-notes", default="")
-    ap.add_argument("--fw", help="firmware .bin (firmware.ino.bin)")
+    ap.add_argument("--fw", help="firmware .bin (LookieFirmware.ino.bin)")
     ap.add_argument("--fw-version")
     ap.add_argument("--fw-notes", default="")
     ap.add_argument("--out", default="release")
@@ -65,7 +65,7 @@ def main():
         # Birleşik (merged) dosya da önyükleyiciyle 0xE9 ile başlar, ama
         # uygulama imajı 0x10000'de ikinci bir 0xE9 ile gelir.
         if len(img) > 0x10000 and img[0x10000:0x10001] == b"\xe9":
-            ap.error("bu birleşik (merged) dosya; yalnızca firmware.ino.bin verilmeli")
+            ap.error("bu birleşik (merged) dosya; yalnızca LookieFirmware.ino.bin verilmeli")
         name = f"lookie-firmware-{a.fw_version}.bin"
         shutil.copyfile(a.fw, os.path.join(a.out, name))
         manifest["firmware"] = describe(a.fw, a.fw_version, name, a.fw_notes)

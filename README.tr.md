@@ -1,6 +1,6 @@
-# LookieApp
+# LookieDesktop
 
-[Lookie](https://github.com/hasanberkm/Lookie) kafa takip cihazının Windows
+[Lookie](https://github.com/hasanberkm/LookieFirmware) kafa takip cihazının Windows
 uygulaması. Cihaza Bluetooth ile bağlanır, canlı görünümü gösterir, ayarları
 cihaz çalışırken değiştirir ve uygulama ile firmware güncellemelerini yükler.
 
@@ -31,13 +31,13 @@ Sonuç `dist\Lookie.exe` dosyasıdır.
 Uygulama bu reponun son yayınını (`releases/latest`) okur ve daha yeni uygulama
 ve firmware sürümlerini sunar.
 
-1. Exe'yi oluşturun ve firmware'i Lookie reposunda (`firmware/`) derleyin.
-   Derleme klasöründeki `firmware.ino.bin` dosyasını kullanın, birleşik
+1. Exe'yi oluşturun ve firmware'i LookieFirmware reposunda derleyin.
+   Derleme klasöründeki `LookieFirmware.ino.bin` dosyasını kullanın, birleşik
    (merged) dosyayı değil.
 2. Yayın dosyalarını hazırlayın:
 
    ```bash
-   python tools/make_update_json.py --app dist/Lookie.exe --app-version 1.1.0 --fw <derleme klasörü>/firmware.ino.bin --fw-version 1.2.1
+   python tools/make_update_json.py --app dist/Lookie.exe --app-version 1.1.0 --fw <derleme klasörü>/LookieFirmware.ino.bin --fw-version 1.2.1
    ```
 
 3. GitHub'da bir Release oluşturun (ör. etiket `v1.2.1`) ve `release/`

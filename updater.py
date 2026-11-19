@@ -2,7 +2,7 @@
 
 Yayın akışı (bkz. tools/make_update_json.py):
   1. GitHub'da yeni bir Release oluştur (ör. etiket v1.2.0).
-  2. Dosyaları ekle: Lookie.exe, firmware .bin (firmware.ino.bin) ve
+  2. Dosyaları ekle: Lookie.exe, firmware .bin (LookieFirmware.ino.bin) ve
      update.json (betik üretir: sürümler, dosya adları, boyut, SHA-256).
   3. Uygulama açılışta ve belli aralıklarla
      https://api.github.com/repos/<UPDATE_REPO>/releases/latest
@@ -35,7 +35,7 @@ import tempfile
 import urllib.parse
 import urllib.request
 
-UPDATE_REPO = "hasanberkm/LookieApp"
+UPDATE_REPO = "hasanberkm/LookieDesktop"
 USER_AGENT = "Lookie-Updater"
 TIMEOUT = 15
 

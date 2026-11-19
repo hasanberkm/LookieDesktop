@@ -1,6 +1,6 @@
-# LookieApp
+# LookieDesktop
 
-The Windows app for the [Lookie](https://github.com/hasanberkm/Lookie) head
+The Windows app for the [Lookie](https://github.com/hasanberkm/LookieFirmware) head
 tracker. It connects to the device over Bluetooth, shows the live view, changes
 the settings while the device runs and installs app and firmware updates.
 
@@ -31,13 +31,13 @@ The result is `dist\Lookie.exe`.
 The app reads the latest release of this repository
 (`releases/latest`) and offers newer app and firmware versions.
 
-1. Build the exe, and compile the firmware in the Lookie repository
-   (`firmware/`). Use `firmware.ino.bin` from the build folder, not the merged
+1. Build the exe, and compile the firmware in the LookieFirmware
+   repository. Use `LookieFirmware.ino.bin` from the build folder, not the merged
    file.
 2. Create the release files:
 
    ```bash
-   python tools/make_update_json.py --app dist/Lookie.exe --app-version 1.1.0 --fw <build folder>/firmware.ino.bin --fw-version 1.2.1
+   python tools/make_update_json.py --app dist/Lookie.exe --app-version 1.1.0 --fw <build folder>/LookieFirmware.ino.bin --fw-version 1.2.1
    ```
 
 3. Create a GitHub release (for example tag `v1.2.1`) and attach every file from
